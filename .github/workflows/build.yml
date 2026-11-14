@@ -1,0 +1,29 @@
+name: Build
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: sharelatex/sharelatex
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      # Please keep the package list alphabetized
+      # `filehook` is a dependency of `currfile` which is a dependency of `standalone`
+      # `pgf` is for `tikz.sty` which is a dependency of `orcidlink`
+      # `tex-gyre` is for the `tgheros` font
+      - name: Install deps
+        run: |
+          tlmgr update --self
+          tlmgr install caption comment filehook listings orcidlink parskip pgf standalone tex-gyre titlesec tocloft
+          tlmgr path add
+      - name: Compile
+        run: latexmk -pdf -interaction=nonstopmode tex/cosig_full.tex
+      - name: Upload
+        run: curl sendit.sh -T cosig_full.pdf
+      - name: Compile2
+        run: latexmk -pdf -interaction=nonstopmode tex/citations.tex
+      - name: Upload2
+        run: curl sendit.sh -T citations.pdf
